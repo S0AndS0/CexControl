@@ -9,6 +9,14 @@
 # Licence:    Free to use, copy and distribute as long as I'm credited
 #             Provided as is, use at your own risk and for your own benefit
 # Donate BTC: 1Lehv8uMSMyYyY7ZFTN1NiRj8X24E56rvV
+# ______________________________________________________________________________
+# Edits by:   S0AndS0
+# BTC:        1JJXnF2NMcTT24Rj7g9XkEDN5qP5nRFk1o
+# Change log: 
+#  09-07-2014
+#	added support for GHS/LTC/BTC trading
+#	removed support for GHS/NMC/BTC trading
+# ______________________________________________________________________________
 #-------------------------------------------------------------------------------
 
 from __future__ import print_function
@@ -22,7 +30,7 @@ import sys
 ## just place till P3
 import urllib2
 
-version = "0.9.6"
+version = "0.9.6.1"
 
 ## Get Loggin obect
 from Log import Logger
@@ -306,24 +314,23 @@ def TradeLoop(context, settings):
     log.Output ("GHS balance: %s" % GHSBalance)
     log.Output ("")
 
-    # Not longer needed, targetcoin is Always BTC, arbitrage no longer done
-    #TargetCoin = GetTargetCoin(context)
+    TargetCoin = GetTargetCoin(context)
 
-    #log.Output ("Target Coin set to: %s" % TargetCoin[0])
-    #log.Output ("")
+    log.Output ("Target Coin set to: %s" % TargetCoin[0])
+    log.Output ("")
 
-    #log.Output ( "Efficiency threshold: %s" % settings.EfficiencyThreshold )
-    #log.Output ( "Efficiency possible: %0.2f" % TargetCoin[1] )
+    log.Output ( "Efficiency threshold: %s" % settings.EfficiencyThreshold )
+    log.Output ( "Efficiency possible: %0.2f" % TargetCoin[1] )
 
-    #if (TargetCoin[1] >= settings.EfficiencyThreshold ):
-    #    arbitrate = True
-    #    log.Output ("Arbitration desired, trade coins for target coin")
-    #else:
-    #    arbitrate = False
-    #    if ( settings.HoldCoins == True ):
-    #        log.Output ("Arbitration not desired, hold non target coins this cycle")
-    #    else:
-    #        log.Output ("Arbitration not desired, reinvest all coins this cycle")
+    if (TargetCoin[1] >= settings.EfficiencyThreshold ):
+        arbitrate = True
+        log.Output ("Arbitration desired, trade coins for target coin")
+    else:
+        arbitrate = False
+        if ( settings.HoldCoins == True ):
+            log.Output ("Arbitration not desired, hold non target coins this cycle")
+        else:
+            log.Output ("Arbitration not desired, reinvest all coins this cycle")
 
     PrintBalance( context, "BTC")
     PrintBalance( context, "NMC")
@@ -333,38 +340,31 @@ def TradeLoop(context, settings):
     ## Trade in IXC for BTC
     ReinvestCoinByClass(context, settings.IXC, "BTC")
 
-    ## Trade in LTC for BTC
-    ReinvestCoinByClass(context, settings.LTC, "BTC")
-    
     ## Trade in NMC for BTC
-    ReinvestCoinByClass(context, settings.NMC, "BTC")    
-    
-    ## Trade BTC for GHS
-    ReinvestCoinByClass(context, settings.BTC, "GHS" )
+    ReinvestCoinByClass(context, settings.NMC, "BTC")
 
     ## Trade for BTC
-    ## This is no longer needed, as GHS are always traded for BTC
-    #if (TargetCoin[0] == "BTC"):
-    #    if ( arbitrate ):
-    #        ## We will assume that on arbitrate, we also respect the Reserve
-    #        ReinvestCoinByClass(context, settings.NMC, TargetCoin[0] )
+    if (TargetCoin[0] == "BTC"):
+        if ( arbitrate ):
+            ## We will assume that on arbitrate, we also respect the Reserve
+            ReinvestCoinByClass(context, settings.LTC , TargetCoin[0] )
 
-    #    else:
-    #        if ( settings.HoldCoins == False ):
-    #            ReinvestCoinByClass(context, settings.NMC, "GHS")
+        else:
+            if ( settings.HoldCoins == False ):
+                ReinvestCoinByClass(context, settings.LTC , "GHS")
 
-    #    ReinvestCoinByClass(context, settings.BTC, "GHS" )
+        ReinvestCoinByClass(context, settings.BTC, "GHS" )
 
-    ## Trade for NMC
-    #if (TargetCoin[0] == "NMC"):
-    #    if ( arbitrate ):
-    #        ## We will assume that on arbitrate, we also respect the Reserve
-    #        ReinvestCoinByClass(context, settings.BTC, TargetCoin[0] )
-    #    else:
-    #        if ( settings.HoldCoins == False ):
-    #            ReinvestCoinByClass(context, settings.BTC, "GHS" )
+    ## Trade for LTC
+    if (TargetCoin[0] == "LTC"):
+        if ( arbitrate ):
+            ## We will assume that on arbitrate, we also respect the Reserve
+            ReinvestCoinByClass(context, settings.BTC, TargetCoin[0] )
+        else:
+            if ( settings.HoldCoins == False ):
+                ReinvestCoinByClass(context, settings.BTC, "GHS" )
 
-    #    ReinvestCoinByClass(context, settings.NMC, "GHS" )
+        ReinvestCoinByClass(context, settings.LTC, "GHS" )
 
 
 ## Convert a unicode based float to a real float for us in calculations
@@ -403,22 +403,21 @@ def CancelOrder(context):
         except:
             log.Output ("Cancel order failed")
 
-    ## NMC Order cancel
-    #$ this market no longer seems to exsist
-    #order = context.current_orders("GHS/NMC")
-    #for item in order:
-    #    try:
-    #        context.cancel_order(item['id'])
-    #        log.Output ("GHS/NMC Order %s canceled" % item['id'])
-    #    except:
-    #        log.Output ("Cancel order failed")
-
-    ## NMC Order cancel
-    order = context.current_orders("NMC/BTC")
+    ## LTC Order cancel
+    order = context.current_orders("GHS/LTC")
     for item in order:
         try:
             context.cancel_order(item['id'])
-            log.Output ("BTC/NMC Order %s canceled" % item['id'])
+            log.Output ("GHS/LTC Order %s canceled" % item['id'])
+        except:
+            log.Output ("Cancel order failed")
+
+    ## LTC Order cancel
+    order = context.current_orders("LTC/BTC")
+    for item in order:
+        try:
+            context.cancel_order(item['id'])
+            log.Output ("BTC/LTC Order %s canceled" % item['id'])
         except:
             log.Output ("Cancel order failed")
 
@@ -444,9 +443,6 @@ def GetBalance(Context, CoinName):
 
         Coin =  balance[CoinName]
         Saldo = ConvertUnicodeFloatToFloat(Coin["available"])
-        
-        if ( Coin["available"][0] == '-' ):
-            Saldo = Saldo * -1
 
     except:
         ## log.Output (balance)
@@ -553,13 +549,7 @@ def TradeCoin( Context, CoinName, TargetCoin, Amount ):
 
     log.Output ("----------------------------------------")
     log.Output ( CoinName + " for " + TargetCoin )
-    log.Output ( "Price               : %.8f" % Price )
-    
-    ## Adjust price, claim the 1 percent!
-#    Price = Price * 0.999
-#    Price = round(Price,8)
-#    log.Output ( "Claim the 1 percent!: %.8f" % Price )
-    
+
     ## Get the balance of the coin
     TotalBalance = GetBalance(Context, CoinName)
 
@@ -567,9 +557,8 @@ def TradeCoin( Context, CoinName, TargetCoin, Amount ):
     Saldo = Amount
 
     ## The hack we are using right now is going to be to add 2 percent to the PRICE of the
-    ## target coin,
-    FeePercent = 1.02
-    FeePrice = Price * FeePercent
+    ## targetcoin,
+    FeePrice = Price * 1.02
 
     ## Caculate what to buy
     AmountToBuy = Saldo / FeePrice
@@ -577,7 +566,7 @@ def TradeCoin( Context, CoinName, TargetCoin, Amount ):
 
     ## Calculate the total amount
     Total = AmountToBuy * FeePrice
-    
+
     ## Adjusted to compensate for floating math conversion
     while ( Total > Saldo ):
         AmountToBuy = AmountToBuy - 0.0000005
@@ -658,38 +647,38 @@ def FormatFloat( number):
 def GetTargetCoin(Context):
     ## Get the Price NMC/BTC
 
-    GHS_NMCPrice = GetPrice(Context, "GHS/NMC")
+    GHS_LTCPrice = GetPrice(Context, "GHS/LTC")
     GHS_BTCPrice = GetPrice(Context, "GHS/BTC")
-    NMC_BTCPrice = GetPrice(Context, "NMC/BTC")
+    LTC_BTCPrice = GetPrice(Context, "LTC/BTC")
 
-    BTC_NMCPrice = 1/NMC_BTCPrice
+    BTC_LTCPrice = 1/LTC_BTCPrice
 
-    GHS_NMCPrice = 1/GHS_NMCPrice
+    GHS_LTCPrice = 1/GHS_LTCPrice
     GHS_BTCPrice = 1/GHS_BTCPrice
 
-    log.Output ("1 NMC is %s GHS" % FormatFloat(GHS_NMCPrice))
-    log.Output ("1 NMC is %s BTC" % FormatFloat(NMC_BTCPrice))
+    log.Output ("1 LTC is %s GHS" % FormatFloat(GHS_LTCPrice))
+    log.Output ("1 LTC is %s BTC" % FormatFloat(LTC_BTCPrice))
     log.Output ("1 BTC is %s GHS" % FormatFloat(GHS_BTCPrice))
-    log.Output ("1 BTC is %s NMC" % FormatFloat(BTC_NMCPrice))
+    log.Output ("1 BTC is %s LTC" % FormatFloat(BTC_LTCPrice))
 
-    NMCviaBTC = NMC_BTCPrice * GHS_BTCPrice
-    BTCviaNMC = BTC_NMCPrice * GHS_NMCPrice
+    LTCviaBTC = LTC_BTCPrice * GHS_BTCPrice
+    BTCviaLTC = BTC_LTCPrice * GHS_LTCPrice
 
-    BTCviaNMCPercentage = BTCviaNMC / GHS_BTCPrice * 100
-    NMCviaBTCPercentage = NMCviaBTC / GHS_NMCPrice * 100
+    BTCviaLTCPercentage = BTCviaLTC / GHS_BTCPrice * 100
+    LTCviaBTCPercentage = LTCviaBTC / GHS_LTCPrice * 100
 
     log.Output ("")
-    log.Output ("1 BTC via NMC is %s GHS" % FormatFloat(BTCviaNMC) )
-    log.Output ("Efficiency : %2.2f" % BTCviaNMCPercentage)
-    log.Output ("1 NMC via BTC is %s GHS" % FormatFloat(NMCviaBTC) )
-    log.Output ("Efficiency : %2.2f" % NMCviaBTCPercentage)
+    log.Output ("1 BTC via LTC is %s GHS" % FormatFloat(BTCviaLTC) )
+    log.Output ("Efficiency : %2.2f" % BTCviaLTCPercentage)
+    log.Output ("1 LTC via BTC is %s GHS" % FormatFloat(LTCviaBTC) )
+    log.Output ("Efficiency : %2.2f" % LTCviaBTCPercentage)
 
-    if NMCviaBTCPercentage > BTCviaNMCPercentage:
+    if LTCviaBTCPercentage > BTCviaLTCPercentage:
         coin = "BTC"
-        efficiency = NMCviaBTCPercentage - 100
+        efficiency = LTCviaBTCPercentage - 100
     else:
-        coin = "NMC"
-        efficiency = BTCviaNMCPercentage - 100
+        coin = "LTC"
+        efficiency = BTCviaLTCPercentage - 100
 
     returnvalue = (coin, efficiency)
 
@@ -711,23 +700,23 @@ def GetTickerName( CoinName, TargetCoin ):
 
     Ticker = ""
 
-    if CoinName == "NMC" :
+    if CoinName == "LTC" :
         if TargetCoin == "GHS" :
-            Ticker = "GHS/NMC"
+            Ticker = "GHS/LTC"
         if TargetCoin == "BTC" :
-            Ticker = "NMC/BTC"
+            Ticker = "LTC/BTC"
 
     if CoinName == "BTC" :
         if TargetCoin == "GHS" :
             Ticker = "GHS/BTC"
-        if TargetCoin == "NMC" :
-            Ticker = "NMC/BTC"
+        if TargetCoin == "LTC" :
+            Ticker = "LTC/BTC"
 
     if CoinName == "IXC" :
         Ticker = "IXC/BTC"
 
-    if CoinName == "LTC" :
-        Ticker = "LTC/BTC"
+    if CoinName == "NMC" :
+        Ticker = "NMC/BTC"
 
     return Ticker
 
