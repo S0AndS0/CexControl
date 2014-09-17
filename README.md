@@ -5,6 +5,8 @@ This is Beta software. Use at your own risk.
 
 ### Installation
 Put all the files in a user writeable directory.
+#### For Debian Linux
+apt-get install python-tk
 
 ### User guide
 #### To start
@@ -38,8 +40,10 @@ Vouchers via Cex.IO can of course also be used.
 I will accept and appreciate every and all donations.
 
 ### Version history
+#### Version 0.9.6.1 	S0AndS0's edits
+- Added LTC/GHS market in place of NMC/GHS and re-enabled arbitration between BTC & LTC
 
-#### Version 0.9.6
+#### Version 0.9.6 
 - Removed the NMC/GHS market, no longer offered on Cex.IO
 
 #### Version 0.9.2
